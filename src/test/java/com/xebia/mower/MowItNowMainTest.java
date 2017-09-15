@@ -96,7 +96,7 @@ public class MowItNowMainTest {
         if (firstResult.getId().equals("1")) {
             assertThat(firstResult.getCurrentPosition()).isEqualTo(new Position(1, 3, N));
             assertThat(secondResult.getCurrentPosition()).isEqualTo(new Position(5, 1, E));
-        } else if (firstResult.getId().equals("2")) {
+        } else {
             assertThat(firstResult.getCurrentPosition()).isEqualTo(new Position(5, 1, E));
             assertThat(secondResult.getCurrentPosition()).isEqualTo(new Position(1, 3, N));
         }
