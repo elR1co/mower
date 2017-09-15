@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/elR1co/mower.svg?branch=master)](https://travis-ci.org/elR1co/mower)
+[![Coverage Status](https://coveralls.io/repos/github/elR1co/mower/badge.svg?branch=master)](https://coveralls.io/github/elR1co/mower?branch=master)
 
 # Exercice 2 – Architecte / Développeur – Conception Objet
 La société MowItNow a décidé de développer une tondeuse à gazon automatique, destinée aux surfaces rectangulaires.
