@@ -2,15 +2,20 @@ package com.xebia.mower.model;
 
 import com.xebia.mower.move.DefaultMowerStrategy;
 import com.xebia.mower.move.IMowerStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
+import static lombok.AccessLevel.PRIVATE;
+
+@Slf4j
+@ToString(of = {"id", "currentPosition"})
+@NoArgsConstructor(access = PRIVATE) // For Mockito
 public class Mower {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Mower.class);
-
-    private String id;
-    private Position currentPosition;
+    @Getter private String id;
+    @Getter private Position currentPosition;
     private IMowerStrategy mowerStrategy;
 
     public Mower(String id, int x, int y, Orientation orientation) {
@@ -25,17 +30,7 @@ public class Mower {
         this.id = id;
         this.currentPosition = initialPosition;
         this.mowerStrategy = mowerStrategy;
-    }
-
-    // For Mockito
-    private Mower() {}
-
-    public Position getCurrentPosition() {
-        return currentPosition;
-    }
-
-    public String getId() {
-        return id;
+        log.info("{}", this);
     }
 
     public Position shouldMove() {
@@ -44,27 +39,19 @@ public class Mower {
 
     public Position move() {
         currentPosition = shouldMove();
-        LOGGER.info("{}", this);
+        log.info("{}", this);
         return currentPosition;
     }
 
     public Position turnRight() {
         currentPosition = mowerStrategy.shouldTurnRight(currentPosition);
-        LOGGER.info("{}", this);
+        log.info("{}", this);
         return currentPosition;
     }
 
     public Position turnLeft() {
         currentPosition = mowerStrategy.shouldTurnLeft(currentPosition);
-        LOGGER.info("{}", this);
+        log.info("{}", this);
         return currentPosition;
-    }
-
-    @Override
-    public String toString() {
-        return "Mower{" +
-                "id='" + id + '\'' +
-                ", currentPosition=" + currentPosition +
-                '}';
     }
 }

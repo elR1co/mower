@@ -19,25 +19,24 @@ public class MowItNowSequencialMain {
     public static void main(String[] args) throws Exception {
         if (args.length < 1) throw new IllegalArgumentException("Cannot find file path in given program arguments.");
 
-        Scanner scanner = new Scanner(Paths.get(ClassLoader.getSystemResource(args[0]).toURI()));
-        Grid grid = parseGridXMaxYMax(0, 0, scanner.nextLine());
-        IMediator mediator = DefaultMediator.create(grid);
-        AtomicInteger cptMower = new AtomicInteger(1);
+        try (Scanner scanner = new Scanner(Paths.get(ClassLoader.getSystemResource(args[0]).toURI()))) {
+            Grid grid = parseGridXMaxYMax(0, 0, scanner.nextLine());
+            IMediator mediator = DefaultMediator.create(grid);
+            AtomicInteger cptMower = new AtomicInteger(1);
 
-        while (true) {
-            Position mowerInitialPosition = parseMowerInitialPosition(scanner.nextLine());
-            List<Instruction> instructions = parseInstructions(scanner.nextLine());
+            while (true) {
+                Position mowerInitialPosition = parseMowerInitialPosition(scanner.nextLine());
+                List<Instruction> instructions = parseInstructions(scanner.nextLine());
 
-            Mower mower = new Mower(String.valueOf(cptMower.getAndIncrement()), mowerInitialPosition);
-            mediator.registerMower(mower);
+                Mower mower = new Mower(String.valueOf(cptMower.getAndIncrement()), mowerInitialPosition);
+                mediator.register(mower);
 
-            instructions.forEach(instruction -> mediator.sendInstruction(instruction, mower));
+                instructions.forEach(instruction -> mediator.sendInstruction(instruction, mower));
 
-            if (!scanner.hasNextLine()) {
-                break;
+                if (!scanner.hasNextLine()) {
+                    break;
+                }
             }
         }
-
-        scanner.close();
     }
 }

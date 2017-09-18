@@ -1,11 +1,13 @@
 package com.xebia.mower.model;
 
+import lombok.Getter;
+
 public enum Orientation {
 
     N, E, W, S;
 
-    private Orientation leftOrientation;
-    private Orientation rightOrientation;
+    @Getter private Orientation leftOrientation;
+    @Getter private Orientation rightOrientation;
 
     static {
         N.leftOrientation = W;
@@ -17,13 +19,5 @@ public enum Orientation {
         S.rightOrientation = W;
         E.rightOrientation = S;
         W.rightOrientation = N;
-    }
-
-    public Orientation getLeftOrientation() {
-        return leftOrientation;
-    }
-
-    public Orientation getRightOrientation() {
-        return rightOrientation;
     }
 }

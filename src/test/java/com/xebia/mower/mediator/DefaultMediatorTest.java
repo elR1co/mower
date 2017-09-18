@@ -12,6 +12,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 
+import static com.xebia.mower.mediator.DefaultMediator.DEFAULT_WAIT_TIMEOUT;
 import static com.xebia.mower.model.Instruction.*;
 import static com.xebia.mower.model.Orientation.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +44,7 @@ public class DefaultMediatorTest {
         doReturn(true).when(mediator).isPositionValid(currentPosition);
 
         // When
-        DefaultMediator result = mediator.registerMower(mowerMock);
+        DefaultMediator result = mediator.register(mowerMock);
 
         // Then
         verify(mowerMock).getCurrentPosition();
@@ -57,10 +58,11 @@ public class DefaultMediatorTest {
         Position currentPosition = new Position(-1, 1, E);
         mediator.mowerList = new ArrayList<>();
         when(mowerMock.getCurrentPosition()).thenReturn(currentPosition);
+        when(mowerMock.getId()).thenReturn("1");
         doReturn(false).when(mediator).isPositionValid(currentPosition);
 
         // When // Then
-        assertThatThrownBy(() -> mediator.registerMower(mowerMock)).isInstanceOf(IllegalArgumentException.class).hasMessage("Mower has invalid position.");
+        assertThatThrownBy(() -> mediator.register(mowerMock)).isInstanceOf(IllegalArgumentException.class).hasMessage("Mower 1 has invalid position.");
     }
 
     @Test public void should_send_instruction_to_turn_right() throws Exception {
@@ -102,24 +104,24 @@ public class DefaultMediatorTest {
         assertThat(result).isEqualTo(expectedPosition);
     }
 
-    @Test public void should_move_when_all_conditions_filled() throws Exception {
+    @Test public void should_move_when_all_conditions_resolved() throws Exception {
         // Given
         Position nextPosition = new Position(1, 3, N);
 
         when(mowerMock.shouldMove()).thenReturn(nextPosition);
         when(mowerMock.move()).thenReturn(nextPosition);
         doReturn(true).when(mediator).isPositionValid(nextPosition);
-        doReturn(false).when(mediator).isPositionAlreadyFilled(nextPosition);
+        doReturn(false).when(mediator).isPositionLocked(nextPosition);
 
         // When
         Position result = mediator.handleMove(mowerMock);
 
         // Then
         verify(mowerMock).shouldMove();
-        verify(mowerMock, never()).getCurrentPosition();
+        verify(mowerMock).getCurrentPosition();
         verify(mowerMock).move();
         verify(mediator).isPositionValid(nextPosition);
-        verify(mediator).isPositionAlreadyFilled(nextPosition);
+        verify(mediator).isPositionLocked(nextPosition);
 
         assertThat(result).isEqualTo(nextPosition);
     }
@@ -141,12 +143,12 @@ public class DefaultMediatorTest {
         verify(mowerMock).getCurrentPosition();
         verify(mowerMock, never()).move();
         verify(mediator).isPositionValid(nextPosition);
-        verify(mediator, never()).isPositionAlreadyFilled(nextPosition);
+        verify(mediator, never()).isPositionLocked(nextPosition);
 
         assertThat(result).isEqualTo(currentPosition);
     }
 
-    @Test public void should_not_move_when_new_position_is_already_filled() throws Exception {
+    @Test public void should_not_move_when_new_position_is_locked() throws Exception {
         // Given
         Position currentPosition = new Position(1, 0, W);
         Position nextPosition = new Position(0, 0, W);
@@ -154,7 +156,9 @@ public class DefaultMediatorTest {
         when(mowerMock.shouldMove()).thenReturn(nextPosition);
         when(mowerMock.getCurrentPosition()).thenReturn(currentPosition);
         doReturn(true).when(mediator).isPositionValid(nextPosition);
-        doReturn(true).when(mediator).isPositionAlreadyFilled(nextPosition);
+        doReturn(true, true).when(mediator).isPositionLocked(nextPosition);
+        doNothing().when(mediator).waitPositionToUnlock(DEFAULT_WAIT_TIMEOUT);
+        doNothing().when(mediator).notifyLockIsFree();
 
         // When
         Position result = mediator.handleMove(mowerMock);
@@ -164,9 +168,39 @@ public class DefaultMediatorTest {
         verify(mowerMock).getCurrentPosition();
         verify(mowerMock, never()).move();
         verify(mediator).isPositionValid(nextPosition);
-        verify(mediator).isPositionAlreadyFilled(nextPosition);
+        verify(mediator, times(2)).isPositionLocked(nextPosition);
+        verify(mediator, times(2)).waitPositionToUnlock(DEFAULT_WAIT_TIMEOUT);
+        verify(mediator).notifyLockIsFree();
 
         assertThat(result).isEqualTo(currentPosition);
+    }
+
+    @Test public void should_move_when_position_is_locked_only_once() {
+        // Given
+        Position currentPosition = new Position(1, 0, W);
+        Position nextPosition = new Position(0, 0, W);
+
+        when(mowerMock.shouldMove()).thenReturn(nextPosition);
+        when(mowerMock.move()).thenReturn(nextPosition);
+        when(mowerMock.getCurrentPosition()).thenReturn(currentPosition);
+        doReturn(true).when(mediator).isPositionValid(nextPosition);
+        doReturn(true, false).when(mediator).isPositionLocked(nextPosition);
+        doNothing().when(mediator).waitPositionToUnlock(DEFAULT_WAIT_TIMEOUT);
+        doNothing().when(mediator).notifyLockIsFree();
+
+        // When
+        Position result = mediator.handleMove(mowerMock);
+
+        // Then
+        verify(mowerMock).shouldMove();
+        verify(mowerMock).getCurrentPosition();
+        verify(mowerMock).move();
+        verify(mediator).isPositionValid(nextPosition);
+        verify(mediator, times(2)).isPositionLocked(nextPosition);
+        verify(mediator).waitPositionToUnlock(DEFAULT_WAIT_TIMEOUT);
+        verify(mediator).notifyLockIsFree();
+
+        assertThat(result).isEqualTo(nextPosition);
     }
 
     @Test public void position_should_be_valid() throws Exception {
@@ -194,7 +228,7 @@ public class DefaultMediatorTest {
         assertThat(result).isFalse();
     }
 
-    @Test public void position_should_not_be_filled() throws Exception {
+    @Test public void position_should_not_be_locked() throws Exception {
         // Given
         Position positionToCompare = new Position(1, 1, N);
         mediator.mowerList = new ArrayList<>();
@@ -203,13 +237,13 @@ public class DefaultMediatorTest {
         // When
         when(mowerMock.getCurrentPosition()).thenReturn(currentPositionMock);
         when(currentPositionMock.isSame(positionToCompare)).thenReturn(false);
-        boolean result = mediator.isPositionAlreadyFilled(positionToCompare);
+        boolean result = mediator.isPositionLocked(positionToCompare);
 
         // Then
         assertThat(result).isFalse();
     }
 
-    @Test public void position_should_already_be_filled() throws Exception {
+    @Test public void position_should_be_locked() throws Exception {
         // Given
         Position positionToCompare = new Position(1, 1, S);
         mediator.mowerList = new ArrayList<>();
@@ -218,7 +252,7 @@ public class DefaultMediatorTest {
         // When
         when(mowerMock.getCurrentPosition()).thenReturn(currentPositionMock);
         when(currentPositionMock.isSame(positionToCompare)).thenReturn(true);
-        boolean result = mediator.isPositionAlreadyFilled(positionToCompare);
+        boolean result = mediator.isPositionLocked(positionToCompare);
 
         // Then
         assertThat(result).isTrue();

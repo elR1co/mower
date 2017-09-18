@@ -1,7 +1,10 @@
 package com.xebia.mower.model;
 
+import lombok.Data;
+
 import static java.util.Objects.nonNull;
 
+@Data
 public class Grid {
 
     private final int xMin;
@@ -21,47 +24,9 @@ public class Grid {
 
     public boolean isPositionValid(Position position) {
         return  nonNull(position) &&
-                position.getX() <= getxMax() &&
-                position.getX() >= getxMin() &&
-                position.getY() >= getyMin() &&
-                position.getY() <= getyMax();
-    }
-
-    public int getxMin() {
-        return xMin;
-    }
-
-    public int getyMin() {
-        return yMin;
-    }
-
-    public int getxMax() {
-        return xMax;
-    }
-
-    public int getyMax() {
-        return yMax;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Grid grid = (Grid) o;
-
-        if (xMin != grid.xMin) return false;
-        if (yMin != grid.yMin) return false;
-        if (xMax != grid.xMax) return false;
-        return yMax == grid.yMax;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = xMin;
-        result = 31 * result + yMin;
-        result = 31 * result + xMax;
-        result = 31 * result + yMax;
-        return result;
+                position.getX() <= getXMax() &&
+                position.getX() >= getXMin() &&
+                position.getY() >= getYMin() &&
+                position.getY() <= getYMax();
     }
 }

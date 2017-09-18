@@ -6,7 +6,7 @@ import com.xebia.mower.model.Position;
 
 public interface IMediator {
 
-    IMediator registerMower(Mower mower);
+    IMediator register(Mower mower);
 
     Position sendInstruction(Instruction instruction, Mower mower);
 }

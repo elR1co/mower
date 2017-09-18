@@ -8,9 +8,11 @@ import com.xebia.mower.model.Mower;
 import com.xebia.mower.model.Position;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.xebia.mower.model.Orientation.E;
 import static com.xebia.mower.model.Orientation.N;
@@ -24,7 +26,7 @@ public class MowItNowMainTest {
         Grid grid = new Grid(0, 0, 5, 5);
         Mower mower1 = new Mower("1", 1, 2, N);
         Mower mower2 = new Mower("2", 3, 3, E);
-        IMediator manager = DefaultMediator.create(grid).registerMower(mower1).registerMower(mower2);
+        IMediator manager = DefaultMediator.create(grid).register(mower1).register(mower2);
         List<Instruction> instructions1 = parseInstructions("GAGAGAGAA");
         List<Instruction> instructions2 = parseInstructions("AADAADADDA");
 
@@ -42,7 +44,7 @@ public class MowItNowMainTest {
         Grid grid = new Grid(0, 0, 5, 5);
         Mower mower1 = new Mower("1", 1, 2, N);
         Mower mower2 = new Mower("2", 3, 3, E);
-        IMediator manager = DefaultMediator.create(grid).registerMower(mower1).registerMower(mower2);
+        IMediator mediator = DefaultMediator.create(grid).register(mower1).register(mower2);
         List<Instruction> instructions1 = parseInstructions("GAGAGAGAA");
         List<Instruction> instructions2 = parseInstructions("AADAADADDA");
 
@@ -50,12 +52,12 @@ public class MowItNowMainTest {
         CountDownLatch latch = new CountDownLatch(2);
 
         new Thread(() -> {
-            instructions1.forEach(instruction -> manager.sendInstruction(instruction, mower1));
+            instructions1.forEach(instruction -> mediator.sendInstruction(instruction, mower1));
             latch.countDown();
         }).start();
 
         new Thread(() -> {
-            instructions2.forEach(instruction -> manager.sendInstruction(instruction, mower2));
+            instructions2.forEach(instruction -> mediator.sendInstruction(instruction, mower2));
             latch.countDown();
         }).start();
 
@@ -71,27 +73,26 @@ public class MowItNowMainTest {
         Grid grid = new Grid(0, 0, 5, 5);
         Mower mower1 = new Mower("1", 1, 2, N);
         Mower mower2 = new Mower("2", 3, 3, E);
-        IMediator manager = DefaultMediator.create(grid).registerMower(mower1).registerMower(mower2);
+        IMediator mediator = DefaultMediator.create(grid).register(mower1).register(mower2);
         List<Instruction> instructions1 = parseInstructions("GAGAGAGAA");
         List<Instruction> instructions2 = parseInstructions("AADAADADDA");
         ExecutorService executorService = Executors.newFixedThreadPool(2);
+        ExecutorCompletionService<Mower> completionService = new ExecutorCompletionService<>(executorService);
 
         // When
-        Callable<Mower> mower1Instructions = () -> {
-            instructions1.forEach(instruction -> manager.sendInstruction(instruction, mower1));
+        completionService.submit(() -> {
+            instructions1.forEach(instruction -> mediator.sendInstruction(instruction, mower1));
             return mower1;
-        };
+        });
 
-        Callable<Mower> mower2Instructions = () -> {
-            instructions2.forEach(instruction -> manager.sendInstruction(instruction, mower2));
+        completionService.submit(() -> {
+            instructions2.forEach(instruction -> mediator.sendInstruction(instruction, mower2));
             return mower2;
-        };
-
-        List<Future<Mower>> results = executorService.invokeAll(Arrays.asList(mower1Instructions, mower2Instructions));
+        });
 
         // Then
-        Mower firstResult = results.get(0).get();
-        Mower secondResult = results.get(1).get();
+        Mower firstResult = completionService.take().get();
+        Mower secondResult = completionService.take().get();
 
         if (firstResult.getId().equals("1")) {
             assertThat(firstResult.getCurrentPosition()).isEqualTo(new Position(1, 3, N));

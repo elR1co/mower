@@ -4,11 +4,20 @@ import com.xebia.mower.model.Grid;
 import com.xebia.mower.model.Instruction;
 import com.xebia.mower.model.Mower;
 import com.xebia.mower.model.Position;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.lang.String.format;
+import static java.util.Objects.nonNull;
+
+@Slf4j
 public class DefaultMediator implements IMediator {
+
+    public static final int DEFAULT_WAIT_TIMEOUT = 5000;
+    public static final int MAX_WAITING_TIMES = 2;
 
     private Grid grid;
     List<Mower> mowerList;
@@ -23,9 +32,10 @@ public class DefaultMediator implements IMediator {
     }
 
     @Override
-    public DefaultMediator registerMower(Mower mower) {
+    public DefaultMediator register(Mower mower) {
         if (!isPositionValid(mower.getCurrentPosition()))
-            throw new IllegalArgumentException("Mower has invalid position.");
+            throw new IllegalArgumentException(format("Mower %s has invalid position.", mower.getId()));
+        log.info("Mower {} added.", mower.getId());
         mowerList.add(mower);
         return this;
     }
@@ -43,18 +53,45 @@ public class DefaultMediator implements IMediator {
     }
 
     synchronized Position handleMove(Mower mower) {
+        Position currentPosition = mower.getCurrentPosition();
         Position potentialNewPosition = mower.shouldMove();
-        if (isPositionValid(potentialNewPosition) && !isPositionAlreadyFilled(potentialNewPosition)) {
-            return mower.move();
+
+        if (!isPositionValid(potentialNewPosition)) {
+            log.warn("New Position {} Invalid for {}", potentialNewPosition, mower);
+            return currentPosition;
         }
-        return mower.getCurrentPosition();
+
+        int times = 0;
+        while (isPositionLocked(potentialNewPosition)) {
+            log.warn("Collision for {}", mower);
+            waitPositionToUnlock(DEFAULT_WAIT_TIMEOUT);
+            if (++times == MAX_WAITING_TIMES) {
+                log.warn(format("Waiting %s times. We go out.", times));
+                notifyLockIsFree();
+                return currentPosition;
+            }
+        }
+
+        Position newPosition = mower.move();
+        notifyLockIsFree();
+        return newPosition;
     }
 
     boolean isPositionValid(Position position) {
         return grid.isPositionValid(position);
     }
 
-    boolean isPositionAlreadyFilled(Position position) {
-        return mowerList.stream().anyMatch(mower -> mower.getCurrentPosition().isSame(position)); //
+    boolean isPositionLocked(Position position) {
+        return  nonNull(position) &&
+                mowerList.stream().anyMatch(mower -> mower.getCurrentPosition().isSame(position));
+    }
+
+    @SneakyThrows(InterruptedException.class)
+    void waitPositionToUnlock(int timeout) {
+        wait(timeout);
+    }
+
+    void notifyLockIsFree() {
+        notifyAll();
     }
 }

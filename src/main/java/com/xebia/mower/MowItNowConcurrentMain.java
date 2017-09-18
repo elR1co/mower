@@ -23,34 +23,41 @@ public class MowItNowConcurrentMain {
     public static void main(String[] args) throws Exception {
         if (args.length < 1) throw new IllegalArgumentException("Cannot find file path in given program arguments.");
 
-        Scanner scanner = new Scanner(Paths.get(ClassLoader.getSystemResource(args[0]).toURI()));
-        Grid grid = parseGridXMaxYMax(0, 0, scanner.nextLine());
-        IMediator mediator = DefaultMediator.create(grid);
-        List<Callable<Position>> mowerEndPositions = new ArrayList<>();
-        AtomicInteger mowerCpt = new AtomicInteger(1);
+        try (Scanner scanner = new Scanner(Paths.get(ClassLoader.getSystemResource(args[0]).toURI()))) {
+            Grid grid = parseGridXMaxYMax(0, 0, scanner.nextLine());
+            IMediator mediator = DefaultMediator.create(grid);
+            List<Callable<Position>> mowerEndPositions = new ArrayList<>();
+            AtomicInteger mowerCpt = new AtomicInteger(1);
 
-        while (true) {
-            Position mowerInitialPosition = parseMowerInitialPosition(scanner.nextLine());
-            List<Instruction> instructions = parseInstructions(scanner.nextLine());
+            while (true) {
+                Position mowerInitialPosition = parseMowerInitialPosition(scanner.nextLine());
+                List<Instruction> instructions = parseInstructions(scanner.nextLine());
+                Mower mower = new Mower(String.valueOf(mowerCpt.getAndIncrement()), mowerInitialPosition);
 
-            Mower mower = new Mower(String.valueOf(mowerCpt.getAndIncrement()), mowerInitialPosition);
-            mediator.registerMower(mower);
+                Callable<Position> mowerEndPosition = () -> {
+                    mediator.register(mower);
+                    Thread.sleep((int)(Math.random()*1000));
+                    instructions.forEach(instruction -> {
+                        mediator.sendInstruction(instruction, mower);
+                        try {
+                            Thread.sleep((int)(Math.random()*1000));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    return mower.getCurrentPosition();
+                };
 
-            Callable<Position> mowerEndPosition = () -> {
-                instructions.forEach(instruction -> mediator.sendInstruction(instruction, mower));
-                return mower.getCurrentPosition();
-            };
+                mowerEndPositions.add(mowerEndPosition);
 
-            mowerEndPositions.add(mowerEndPosition);
-
-            if (!scanner.hasNextLine()) {
-                break;
+                if (!scanner.hasNextLine()) {
+                    break;
+                }
             }
-        }
 
-        ExecutorService executorService = Executors.newFixedThreadPool(mowerCpt.get());
-        executorService.invokeAll(mowerEndPositions);
-        executorService.shutdown();
-        scanner.close();
+            ExecutorService executorService = Executors.newFixedThreadPool(mowerCpt.get());
+            executorService.invokeAll(mowerEndPositions);
+            executorService.shutdown();
+        }
     }
 }

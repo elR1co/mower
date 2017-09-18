@@ -4,16 +4,17 @@ import com.xebia.mower.model.Grid;
 import com.xebia.mower.model.Instruction;
 import com.xebia.mower.model.Orientation;
 import com.xebia.mower.model.Position;
+import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
+import static lombok.AccessLevel.PRIVATE;
 
+@NoArgsConstructor(access = PRIVATE)
 public class FileLineParser {
-
-    private FileLineParser() {}
 
     public static Grid parseGridXMaxYMax(int xMin, int yMin, String line) {
         String[] pos = line.split(" ");
