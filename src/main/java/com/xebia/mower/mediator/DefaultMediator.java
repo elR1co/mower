@@ -4,6 +4,7 @@ import com.xebia.mower.model.Grid;
 import com.xebia.mower.model.Instruction;
 import com.xebia.mower.model.Mower;
 import com.xebia.mower.model.Position;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,8 +13,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
+import static lombok.AccessLevel.PRIVATE;
 
 @Slf4j
+@AllArgsConstructor(access = PRIVATE)
 public class DefaultMediator implements IMediator {
 
     public static final int DEFAULT_WAIT_TIMEOUT = 5000;
@@ -24,11 +27,6 @@ public class DefaultMediator implements IMediator {
 
     public static DefaultMediator create(Grid grid) {
         return new DefaultMediator(grid, new CopyOnWriteArrayList<>());
-    }
-
-    private DefaultMediator(Grid grid, List<Mower> mowerList) {
-        this.grid = grid;
-        this.mowerList = mowerList;
     }
 
     @Override
