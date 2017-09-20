@@ -1,6 +1,7 @@
 package com.xebia.mower.model;
 
 import com.xebia.mower.move.IMowerStrategy;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -18,7 +19,14 @@ public class MowerTest {
     @InjectMocks @Spy Mower mower;
 
     @Mock IMowerStrategy mowerStrategyMock;
-    @Mock Position currentPositionMock;
+
+    Position currentPosition;
+
+    @Before
+    public void onSetUp() {
+        currentPosition = new Position(1, 1, S);
+        mower.currentPosition = currentPosition;
+    }
 
     @Test public void move() throws Exception {
         // Given
@@ -36,20 +44,20 @@ public class MowerTest {
     @Test public void should_move() throws Exception {
         // Given
         Position nextPosition = new Position(1, 0, S);
-        when(mowerStrategyMock.shouldMove(currentPositionMock)).thenReturn(nextPosition);
+        when(mowerStrategyMock.shouldMove(currentPosition)).thenReturn(nextPosition);
 
         // When
         Position result = mower.shouldMove();
 
         // Then
-        verify(mowerStrategyMock).shouldMove(currentPositionMock);
+        verify(mowerStrategyMock).shouldMove(currentPosition);
         assertThat(result).isEqualTo(nextPosition);
     }
 
     @Test public void should_turn_right() throws Exception {
         // Given
         Position expectedPosition = new Position(1, 1, W);
-        when(mowerStrategyMock.shouldTurnRight(currentPositionMock)).thenReturn(expectedPosition);
+        when(mowerStrategyMock.shouldTurnRight(currentPosition)).thenReturn(expectedPosition);
 
         // When
         Position result = mower.turnRight();
@@ -61,7 +69,7 @@ public class MowerTest {
     @Test public void should_turn_left() throws Exception {
         // Given
         Position expectedPosition = new Position(1, 1, E);
-        when(mowerStrategyMock.shouldTurnLeft(currentPositionMock)).thenReturn(expectedPosition);
+        when(mowerStrategyMock.shouldTurnLeft(currentPosition)).thenReturn(expectedPosition);
 
         // When
         Position result = mower.turnLeft();

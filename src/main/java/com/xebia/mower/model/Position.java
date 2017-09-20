@@ -1,14 +1,12 @@
 package com.xebia.mower.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 
 import static java.util.Objects.nonNull;
 
 @Data
-@AllArgsConstructor
-public class Position {
+public final class Position {
 
     private final int x;
     private final int y;

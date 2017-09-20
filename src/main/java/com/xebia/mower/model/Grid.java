@@ -5,7 +5,7 @@ import lombok.Data;
 import static java.util.Objects.nonNull;
 
 @Data
-public class Grid {
+public final class Grid {
 
     private final int xMin;
     private final int yMin;

@@ -14,9 +14,9 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(access = PRIVATE) // For Mockito
 public class Mower {
 
-    @Getter private String id;
-    @Getter private Position currentPosition;
-    private IMowerStrategy mowerStrategy;
+    @Getter String id;
+    @Getter Position currentPosition;
+    IMowerStrategy mowerStrategy;
 
     public Mower(String id, int x, int y, Orientation orientation) {
         this(id, new Position(x, y, orientation));
