@@ -5,6 +5,7 @@ import com.xebia.mower.model.Instruction;
 import com.xebia.mower.model.Mower;
 import com.xebia.mower.model.Position;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,12 +18,13 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Slf4j
 @AllArgsConstructor(access = PRIVATE)
+@NoArgsConstructor(access = PRIVATE) // For Mockito
 public class DefaultMediator implements IMediator {
 
     public static final int DEFAULT_WAIT_TIMEOUT = 5000;
     public static final int MAX_WAITING_TIMES = 2;
 
-    private Grid grid;
+    Grid grid;
     List<Mower> mowerList;
 
     public static DefaultMediator create(Grid grid) {
@@ -62,16 +64,16 @@ public class DefaultMediator implements IMediator {
         int times = 0;
         while (isPositionLocked(potentialNewPosition)) {
             log.warn("Collision for {}", mower);
-            waitPositionToUnlock(DEFAULT_WAIT_TIMEOUT);
+            waitNewPositionToUnlock(DEFAULT_WAIT_TIMEOUT);
             if (++times == MAX_WAITING_TIMES) {
-                log.warn(format("Waiting %s times. We go out.", times));
-                notifyLockIsFree();
+                log.warn("Waiting {} times. We go out.", times);
+                notifyUnlock();
                 return currentPosition;
             }
         }
 
         Position newPosition = mower.move();
-        notifyLockIsFree();
+        notifyUnlock();
         return newPosition;
     }
 
@@ -85,11 +87,11 @@ public class DefaultMediator implements IMediator {
     }
 
     @SneakyThrows(InterruptedException.class)
-    void waitPositionToUnlock(int timeout) {
+    void waitNewPositionToUnlock(int timeout) {
         wait(timeout);
     }
 
-    void notifyLockIsFree() {
+    void notifyUnlock() {
         notifyAll();
     }
 }
