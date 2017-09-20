@@ -21,7 +21,7 @@ public class MowItNowSequencialMain {
 
         try (Scanner scanner = new Scanner(Paths.get(ClassLoader.getSystemResource(args[0]).toURI()))) {
             Grid grid = parseGridXMaxYMax(0, 0, scanner.nextLine());
-            IMediator mediator = DefaultMediator.create(grid);
+            IMediator mediator = new DefaultMediator(grid);
             AtomicInteger cptMower = new AtomicInteger(1);
 
             while (true) {

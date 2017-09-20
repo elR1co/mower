@@ -26,7 +26,7 @@ public class MowItNowMainTest {
         Grid grid = new Grid(0, 0, 5, 5);
         Mower mower1 = new Mower("1", 1, 2, N);
         Mower mower2 = new Mower("2", 3, 3, E);
-        IMediator manager = DefaultMediator.create(grid).register(mower1).register(mower2);
+        IMediator manager = new DefaultMediator(grid).register(mower1).register(mower2);
         List<Instruction> instructions1 = parseInstructions("GAGAGAGAA");
         List<Instruction> instructions2 = parseInstructions("AADAADADDA");
 
@@ -44,7 +44,7 @@ public class MowItNowMainTest {
         Grid grid = new Grid(0, 0, 5, 5);
         Mower mower1 = new Mower("1", 1, 2, N);
         Mower mower2 = new Mower("2", 3, 3, E);
-        IMediator mediator = DefaultMediator.create(grid).register(mower1).register(mower2);
+        IMediator mediator = new DefaultMediator(grid).register(mower1).register(mower2);
         List<Instruction> instructions1 = parseInstructions("GAGAGAGAA");
         List<Instruction> instructions2 = parseInstructions("AADAADADDA");
 
@@ -73,7 +73,7 @@ public class MowItNowMainTest {
         Grid grid = new Grid(0, 0, 5, 5);
         Mower mower1 = new Mower("1", 1, 2, N);
         Mower mower2 = new Mower("2", 3, 3, E);
-        IMediator mediator = DefaultMediator.create(grid).register(mower1).register(mower2);
+        IMediator mediator = new DefaultMediator(grid).register(mower1).register(mower2);
         List<Instruction> instructions1 = parseInstructions("GAGAGAGAA");
         List<Instruction> instructions2 = parseInstructions("AADAADADDA");
         ExecutorService executorService = Executors.newFixedThreadPool(2);
