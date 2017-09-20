@@ -18,6 +18,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xebia.mower.parser.FileLineParser.*;
 
+/**
+ * The concurrent version takes into consideration that several mowers can move concurrently, but two instructions
+ * for the same mower cannot be treated concurrently, they must be treated sequencially in order to keep the same end position.
+ * That's why we only create callables for each list of instructions, not for each instruction separately, otherwise the end
+ * position is unpredictable, which the specification obviously does not want.
+ *
+ * In this case, it is useless to make the Mower class methods synchronized.
+ * However, collisions can happen when two mowers try to access the same position at the same time.
+ *
+ * In this case, it is necessary to synchronize the mower move process only (turnRight or turnLeft is useless)
+ * via the mediator, in order to control who can access which position and when.
+ */
 public class MowItNowConcurrentMain {
 
     public static void main(String[] args) throws Exception {
